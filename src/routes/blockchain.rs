@@ -1,17 +1,11 @@
 use std::collections::HashMap;
-use std::env;
-use std::str::FromStr;
 
 use actix_web::web::{Data, Json};
-use actix_web::{post, HttpResponse};
-use anyhow::Result;
-use secp256k1::SecretKey;
-use tokio::sync::{Mutex, MutexGuard};
-use tracing::{debug, info};
-use web3::transports::Http;
-use web3::types::{Address, TransactionParameters, H160, H256, U256};
-use web3::Web3;
+use actix_web::{get, post, HttpResponse};
+use tokio::sync::Mutex;
+use tracing::{debug, error, info};
 
+use crate::blockchain::{build_sign_and_send, get_balance_internal, get_web3};
 use crate::types::{Currency, EvmConfig, SendTx};
 
 #[post("/blockchain/send")]
@@ -23,7 +17,15 @@ pub async fn send_tx(
     let map = evm_map.lock().await;
     info!("POST \"/blockchain/send\": {info:?}");
     debug!("{map:?}");
-    let web3 = match get_web3(map, &info.currency) {
+    let config = match map.get(&info.currency) {
+        Some(config) => config,
+        None => {
+            let e = format!("Config for {:?} not found", info.currency);
+            error!(e);
+            return HttpResponse::InternalServerError().json(e);
+        }
+    };
+    let web3 = match get_web3(config) {
         Ok(web3) => web3,
         Err(response) => return response,
     };
@@ -41,79 +43,33 @@ pub async fn get_balance(
     let map = evm_map.lock().await;
     let currency = currency.into_inner();
     info!("GET \"/blockchain/balance\": {currency:?}");
-    let web3 = match get_web3(map, &currency) {
-        Ok(web3) => web3,
-        Err(response) => return response,
-    };
-    let account = match account() {
-        Ok(account) => account,
-        Err(e) => return HttpResponse::InternalServerError().json(e.to_string()),
-    };
-    match web3.eth().balance(account, None).await {
-        Ok(bal) => {
-            let bal = wei_to_eth(bal);
-            debug!("Balance for {account:?} = {bal:?}");
-            HttpResponse::Ok().json(format!("{bal} {currency:?}"))
+    let config = match map.get(&currency) {
+        Some(config) => config,
+        None => {
+            let e = format!("Config for {:?} not found", currency);
+            error!(e);
+            return HttpResponse::InternalServerError().json(e);
         }
+    };
+    match get_balance_internal(config).await {
+        Ok(json) => HttpResponse::Ok().json(json),
         Err(e) => HttpResponse::InternalServerError().json(e.to_string()),
     }
 }
 
-fn wei_to_eth(wei_val: U256) -> f64 {
-    let res = wei_val.as_u128() as f64;
-    res / 1_000_000_000_000_000_000.0
-}
-
-fn get_web3(
-    map: MutexGuard<HashMap<Currency, EvmConfig>>,
-    currency: &Currency,
-) -> anyhow::Result<Web3<Http>, HttpResponse> {
-    match map.get(currency) {
-        Some(config) => {
-            debug!("{config:?}");
-            match web3_transport(config) {
-                Ok(web3) => Ok(web3),
-                Err(e) => Err(HttpResponse::InternalServerError().json(e.to_string())),
-            }
-        }
-        None => {
-            Err(HttpResponse::InternalServerError().json(format!("{:?} not supported", currency)))
+#[get("/blockchain/balance_all")]
+pub async fn get_balance_all(evm_map: Data<Mutex<HashMap<Currency, EvmConfig>>>) -> HttpResponse {
+    let map = evm_map.lock().await;
+    info!("GET: \"/blockchain/balance_all\"");
+    let mut balances = vec![];
+    let keys = map.keys().clone();
+    for currency in keys {
+        // Unwrap safe cause we loop over hashmap keys
+        let config = map.get(currency).unwrap();
+        match get_balance_internal(config).await {
+            Ok(json) => balances.push(json),
+            Err(e) => return HttpResponse::InternalServerError().json(e.to_string()),
         }
     }
-}
-
-async fn build_sign_and_send(info: &SendTx, web3: &Web3<Http>) -> anyhow::Result<H256> {
-    let prvk = private_key()?;
-    let to = Address::from_str(&info.to)?;
-    // Build the tx object
-    let tx_object = TransactionParameters {
-        to: Some(to),
-        value: U256::from(info.amount),
-        ..Default::default()
-    };
-
-    // Sign the tx
-    let signed = web3.accounts().sign_transaction(tx_object, &prvk).await?;
-
-    info!("Submitting signed tx: {signed:?}");
-    // Send the tx
-    Ok(web3
-        .eth()
-        .send_raw_transaction(signed.raw_transaction)
-        .await?)
-}
-
-fn web3_transport(config: &EvmConfig) -> Result<Web3<Http>> {
-    let transport = Http::new(&config.node_url)?;
-    Ok(Web3::new(transport))
-}
-
-fn private_key() -> Result<SecretKey> {
-    let secret = env::var("SECRET")?;
-    Ok(SecretKey::from_str(&secret)?)
-}
-
-fn account() -> Result<H160> {
-    let account = env::var("ACCOUNT")?;
-    Ok(H160::from_str(&account)?)
+    HttpResponse::Ok().json(balances)
 }

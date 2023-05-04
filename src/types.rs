@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct EvmConfig {
     pub node_url: String,
     pub denom: String,
-    pub ticker: String,
+    pub currency: Currency,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

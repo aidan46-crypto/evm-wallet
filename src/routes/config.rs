@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use actix_web::web::{Data, Json};
 use actix_web::{get, post, HttpResponse};
@@ -16,13 +15,7 @@ pub async fn add_config(
     let evm = config.into_inner();
     info!("POST \"/config/add\": {evm:#?}");
     let mut map = evm_map.lock().await;
-    let currency = match Currency::from_str(&evm.ticker) {
-        Ok(cur) => cur,
-        Err(e) => {
-            error!("{e}");
-            return HttpResponse::MethodNotAllowed().json(e.to_string());
-        }
-    };
+    let currency = evm.currency;
     if let Some(..) = map.get(&currency) {
         let e = format!("Config for {currency:?} already present");
         error!("{e}");

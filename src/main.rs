@@ -4,12 +4,13 @@ use actix_web::web::Data;
 use actix_web::{App, HttpServer};
 use anyhow::Result;
 use dotenv::dotenv;
-use routes::{add_config, get_balance, list_config, send_tx};
+use routes::{add_config, get_balance, get_balance_all, list_config, send_tx};
 use tokio::sync::Mutex;
 use tracing::{info, Level};
 
 use crate::types::{Currency, EvmConfig};
 
+mod blockchain;
 mod routes;
 mod types;
 
@@ -30,6 +31,7 @@ async fn main() -> Result<()> {
             .service(list_config)
             .service(send_tx)
             .service(get_balance)
+            .service(get_balance_all)
     })
     .bind(("127.0.0.1", 3000))?
     .run()
