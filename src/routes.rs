@@ -1,5 +1,5 @@
+mod blockchain;
 mod config;
-mod transaction;
 
+pub use blockchain::{get_balance, send_tx};
 pub use config::{add_config, list_config};
-pub use transaction::send_tx;

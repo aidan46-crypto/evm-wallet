@@ -4,7 +4,7 @@ use actix_web::web::Data;
 use actix_web::{App, HttpServer};
 use anyhow::Result;
 use dotenv::dotenv;
-use routes::{add_config, list_config, send_tx};
+use routes::{add_config, get_balance, list_config, send_tx};
 use tokio::sync::Mutex;
 use tracing::{info, Level};
 
@@ -29,6 +29,7 @@ async fn main() -> Result<()> {
             .service(add_config)
             .service(list_config)
             .service(send_tx)
+            .service(get_balance)
     })
     .bind(("127.0.0.1", 3000))?
     .run()
