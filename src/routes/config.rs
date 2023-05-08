@@ -23,7 +23,7 @@ pub async fn add_config(
         return HttpResponse::InternalServerError().json(e);
     }
     debug!("Adding {evm:#?} to configs");
-    match add_config_to_toml("config.toml", &evm) {
+    match add_config_to_toml("toml/config.toml", &evm) {
         Ok(()) => {
             map.insert(currency, evm);
             debug!("{map:?}");

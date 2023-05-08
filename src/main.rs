@@ -22,13 +22,13 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(Level::DEBUG)
         .init();
-    let configs = from_toml("config.toml")?;
+    let configs = from_toml("toml/config.toml")?;
     let addr = "127.0.0.1";
     let port = 3000;
     info!("Starting server at {addr}:{port}");
     HttpServer::new(move || {
         let mut map = HashMap::<Currency, EvmConfig>::new();
-        for c in &configs.config {
+        for c in configs.clone().into_iter() {
             map.insert(c.currency, c.clone());
         }
         let evm_map = Data::new(Mutex::new(map));

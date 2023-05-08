@@ -4,7 +4,7 @@ This project is a wallet that works with EVM compatible chains. Currently suppor
 
 ## Configuration
 
-The server starts up and loads configuration from `config.toml` in the root of the directory. While the server is running configuration can be added by using the endpoints, see the next section. Every time a EVM configuration is added it will add the new configuration to `config.toml`.
+The server starts up and loads configuration from `toml/config.toml` in the root of the directory. While the server is running configuration can be added by using the endpoints, see the next section. Every time a EVM configuration is added it will add the new configuration to `toml/config.toml`.
 
 ## Endpoints
 

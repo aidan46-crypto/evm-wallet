@@ -6,8 +6,17 @@ use serde::{Deserialize, Serialize};
 use crate::types::EvmConfig;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ConfigVec {
+pub struct Config {
     pub config: Vec<EvmConfig>,
+}
+
+impl IntoIterator for Config {
+    type Item = EvmConfig;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.config.into_iter()
+    }
 }
 
 pub fn add_config_to_toml(path: &str, config: &EvmConfig) -> Result<()> {
@@ -18,8 +27,8 @@ pub fn add_config_to_toml(path: &str, config: &EvmConfig) -> Result<()> {
     Ok(())
 }
 
-pub fn from_toml(path: &str) -> Result<ConfigVec> {
+pub fn from_toml(path: &str) -> Result<Config> {
     let file = fs::read_to_string(path)?;
-    let config: ConfigVec = toml::from_str(&file)?;
+    let config: Config = toml::from_str(&file)?;
     Ok(config)
 }
