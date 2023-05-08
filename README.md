@@ -1,6 +1,14 @@
 # EVM Wallet
 
-This project is a wallet that works with EVM compatible chains. Chain configurations can be added by sending a POST request to the `/config/add` endpoint.
+This project is a wallet that works with EVM compatible chains. Currently supports sending transactions. New configurations can be added while the wallet is running.
+
+## Configuration
+
+The server starts up and loads configuration from `config.toml` in the root of the directory. While the server is running configuration can be added by using the endpoints, see the next section. Every time a EVM configuration is added it will add the new configuration to `config.toml`.
+
+## Endpoints
+
+Chain configurations can be added by sending a POST request to the `/config/add` endpoint.
 
 ```json
 {
