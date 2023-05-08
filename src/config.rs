@@ -1,4 +1,5 @@
 use std::fs;
+use std::vec::IntoIter;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -7,12 +8,12 @@ use crate::types::EvmConfig;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub config: Vec<EvmConfig>,
+    config: Vec<EvmConfig>,
 }
 
 impl IntoIterator for Config {
     type Item = EvmConfig;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type IntoIter = IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.config.into_iter()

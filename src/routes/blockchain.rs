@@ -15,7 +15,7 @@ pub async fn send_tx(
 ) -> HttpResponse {
     let info = send_info.into_inner();
     let map = evm_map.lock().await;
-    info!("POST \"/blockchain/send\": {info:?}");
+    info!("POST \"/blockchain/send\": {info:#?}");
     debug!("{map:?}");
     let config = match map.get(&info.currency) {
         Some(config) => config,
@@ -46,7 +46,7 @@ pub async fn get_balance(
     let config = match map.get(&currency) {
         Some(config) => config,
         None => {
-            let e = format!("Config for {:?} not found", currency);
+            let e = format!("Config for {currency:?} not found");
             error!(e);
             return HttpResponse::InternalServerError().json(e);
         }
