@@ -1,0 +1,9 @@
+[[config]]
+node_url = "https://rpc.sepolia.org"
+denom = "eth"
+currency = "Eth"
+
+[[config]]
+node_url = "https://endpoints.omniatech.io/v1/matic/mumbai/public"
+denom = "matic"
+currency = "Matic"

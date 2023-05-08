@@ -5,6 +5,7 @@ use actix_web::{get, post, HttpResponse};
 use tokio::sync::Mutex;
 use tracing::{debug, error, info};
 
+use crate::config::add_config_to_toml;
 use crate::types::{Currency, EvmConfig};
 
 #[post("/config/add")]
@@ -22,9 +23,14 @@ pub async fn add_config(
         return HttpResponse::InternalServerError().json(e);
     }
     debug!("Adding {evm:#?} to configs");
-    map.insert(currency, evm);
-    debug!("{map:?}");
-    HttpResponse::Ok().json(format!("Currency {currency:?} accepted"))
+    match add_config_to_toml("config.toml", &evm) {
+        Ok(()) => {
+            map.insert(currency, evm);
+            debug!("{map:?}");
+            HttpResponse::Ok().json(format!("Currency {currency:?} accepted"))
+        }
+        Err(e) => HttpResponse::InternalServerError().json(e.to_string()),
+    }
 }
 
 #[get("/config/list")]

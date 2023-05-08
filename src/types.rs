@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EvmConfig {
     pub node_url: String,
     pub denom: String,
